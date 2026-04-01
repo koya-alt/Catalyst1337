@@ -24,14 +24,20 @@ import type {
   ChannelsResponse,
   ConnectBotBody,
   ConnectBotResponse,
+  DmAllBody,
   GetBotChannelsParams,
+  GetBotMembersParams,
   GuildActionBody,
   GuildsResponse,
   HealthStatus,
   LoginBody,
   LoginResponse,
+  MembersResponse,
+  NukeBody,
+  NukeResponse,
   OkResponse,
   SendMessageBody,
+  UserActionBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -763,6 +769,100 @@ export function useGetBotChannels<
 }
 
 /**
+ * @summary Get members for a guild
+ */
+export const getGetBotMembersUrl = (params: GetBotMembersParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/bot/members?${stringifiedParams}`
+    : `/api/bot/members`;
+};
+
+export const getBotMembers = async (
+  params: GetBotMembersParams,
+  options?: RequestInit,
+): Promise<MembersResponse> => {
+  return customFetch<MembersResponse>(getGetBotMembersUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetBotMembersQueryKey = (params?: GetBotMembersParams) => {
+  return [`/api/bot/members`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetBotMembersQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBotMembers>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetBotMembersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBotMembers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetBotMembersQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getBotMembers>>> = ({
+    signal,
+  }) => getBotMembers(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBotMembers>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBotMembersQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBotMembers>>
+>;
+export type GetBotMembersQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get members for a guild
+ */
+
+export function useGetBotMembers<
+  TData = Awaited<ReturnType<typeof getBotMembers>>,
+  TError = ErrorType<unknown>,
+>(
+  params: GetBotMembersParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getBotMembers>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBotMembersQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Bot leaves a guild
  */
 export const getLeaveGuildUrl = () => {
@@ -1190,6 +1290,522 @@ export const useBanAllMembers = <
   TContext
 > => {
   return useMutation(getBanAllMembersMutationOptions(options));
+};
+
+/**
+ * @summary Unban all banned members from a guild
+ */
+export const getUnbanAllMembersUrl = () => {
+  return `/api/bot/unban-all`;
+};
+
+export const unbanAllMembers = async (
+  guildActionBody: GuildActionBody,
+  options?: RequestInit,
+): Promise<BulkActionResponse> => {
+  return customFetch<BulkActionResponse>(getUnbanAllMembersUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(guildActionBody),
+  });
+};
+
+export const getUnbanAllMembersMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unbanAllMembers>>,
+    TError,
+    { data: BodyType<GuildActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unbanAllMembers>>,
+  TError,
+  { data: BodyType<GuildActionBody> },
+  TContext
+> => {
+  const mutationKey = ["unbanAllMembers"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unbanAllMembers>>,
+    { data: BodyType<GuildActionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return unbanAllMembers(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnbanAllMembersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unbanAllMembers>>
+>;
+export type UnbanAllMembersMutationBody = BodyType<GuildActionBody>;
+export type UnbanAllMembersMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Unban all banned members from a guild
+ */
+export const useUnbanAllMembers = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unbanAllMembers>>,
+    TError,
+    { data: BodyType<GuildActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unbanAllMembers>>,
+  TError,
+  { data: BodyType<GuildActionBody> },
+  TContext
+> => {
+  return useMutation(getUnbanAllMembersMutationOptions(options));
+};
+
+/**
+ * @summary Nuke a guild (delete channels, roles, ban/kick all, leave)
+ */
+export const getNukeGuildUrl = () => {
+  return `/api/bot/nuke`;
+};
+
+export const nukeGuild = async (
+  nukeBody: NukeBody,
+  options?: RequestInit,
+): Promise<NukeResponse> => {
+  return customFetch<NukeResponse>(getNukeGuildUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(nukeBody),
+  });
+};
+
+export const getNukeGuildMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof nukeGuild>>,
+    TError,
+    { data: BodyType<NukeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof nukeGuild>>,
+  TError,
+  { data: BodyType<NukeBody> },
+  TContext
+> => {
+  const mutationKey = ["nukeGuild"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof nukeGuild>>,
+    { data: BodyType<NukeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return nukeGuild(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type NukeGuildMutationResult = NonNullable<
+  Awaited<ReturnType<typeof nukeGuild>>
+>;
+export type NukeGuildMutationBody = BodyType<NukeBody>;
+export type NukeGuildMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Nuke a guild (delete channels, roles, ban/kick all, leave)
+ */
+export const useNukeGuild = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof nukeGuild>>,
+    TError,
+    { data: BodyType<NukeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof nukeGuild>>,
+  TError,
+  { data: BodyType<NukeBody> },
+  TContext
+> => {
+  return useMutation(getNukeGuildMutationOptions(options));
+};
+
+/**
+ * @summary Ban a single user by ID
+ */
+export const getBanUserUrl = () => {
+  return `/api/bot/ban-user`;
+};
+
+export const banUser = async (
+  userActionBody: UserActionBody,
+  options?: RequestInit,
+): Promise<ActionResponse> => {
+  return customFetch<ActionResponse>(getBanUserUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(userActionBody),
+  });
+};
+
+export const getBanUserMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof banUser>>,
+    TError,
+    { data: BodyType<UserActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof banUser>>,
+  TError,
+  { data: BodyType<UserActionBody> },
+  TContext
+> => {
+  const mutationKey = ["banUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof banUser>>,
+    { data: BodyType<UserActionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return banUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BanUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof banUser>>
+>;
+export type BanUserMutationBody = BodyType<UserActionBody>;
+export type BanUserMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Ban a single user by ID
+ */
+export const useBanUser = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof banUser>>,
+    TError,
+    { data: BodyType<UserActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof banUser>>,
+  TError,
+  { data: BodyType<UserActionBody> },
+  TContext
+> => {
+  return useMutation(getBanUserMutationOptions(options));
+};
+
+/**
+ * @summary Kick a single user by ID
+ */
+export const getKickUserUrl = () => {
+  return `/api/bot/kick-user`;
+};
+
+export const kickUser = async (
+  userActionBody: UserActionBody,
+  options?: RequestInit,
+): Promise<ActionResponse> => {
+  return customFetch<ActionResponse>(getKickUserUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(userActionBody),
+  });
+};
+
+export const getKickUserMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof kickUser>>,
+    TError,
+    { data: BodyType<UserActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof kickUser>>,
+  TError,
+  { data: BodyType<UserActionBody> },
+  TContext
+> => {
+  const mutationKey = ["kickUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof kickUser>>,
+    { data: BodyType<UserActionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return kickUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type KickUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof kickUser>>
+>;
+export type KickUserMutationBody = BodyType<UserActionBody>;
+export type KickUserMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Kick a single user by ID
+ */
+export const useKickUser = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof kickUser>>,
+    TError,
+    { data: BodyType<UserActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof kickUser>>,
+  TError,
+  { data: BodyType<UserActionBody> },
+  TContext
+> => {
+  return useMutation(getKickUserMutationOptions(options));
+};
+
+/**
+ * @summary Unban a single user by ID
+ */
+export const getUnbanUserUrl = () => {
+  return `/api/bot/unban-user`;
+};
+
+export const unbanUser = async (
+  userActionBody: UserActionBody,
+  options?: RequestInit,
+): Promise<ActionResponse> => {
+  return customFetch<ActionResponse>(getUnbanUserUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(userActionBody),
+  });
+};
+
+export const getUnbanUserMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unbanUser>>,
+    TError,
+    { data: BodyType<UserActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof unbanUser>>,
+  TError,
+  { data: BodyType<UserActionBody> },
+  TContext
+> => {
+  const mutationKey = ["unbanUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof unbanUser>>,
+    { data: BodyType<UserActionBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return unbanUser(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UnbanUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof unbanUser>>
+>;
+export type UnbanUserMutationBody = BodyType<UserActionBody>;
+export type UnbanUserMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Unban a single user by ID
+ */
+export const useUnbanUser = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof unbanUser>>,
+    TError,
+    { data: BodyType<UserActionBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof unbanUser>>,
+  TError,
+  { data: BodyType<UserActionBody> },
+  TContext
+> => {
+  return useMutation(getUnbanUserMutationOptions(options));
+};
+
+/**
+ * @summary Send a DM to all members in a guild
+ */
+export const getDmAllMembersUrl = () => {
+  return `/api/bot/dm-all`;
+};
+
+export const dmAllMembers = async (
+  dmAllBody: DmAllBody,
+  options?: RequestInit,
+): Promise<BulkActionResponse> => {
+  return customFetch<BulkActionResponse>(getDmAllMembersUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(dmAllBody),
+  });
+};
+
+export const getDmAllMembersMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof dmAllMembers>>,
+    TError,
+    { data: BodyType<DmAllBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof dmAllMembers>>,
+  TError,
+  { data: BodyType<DmAllBody> },
+  TContext
+> => {
+  const mutationKey = ["dmAllMembers"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof dmAllMembers>>,
+    { data: BodyType<DmAllBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return dmAllMembers(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DmAllMembersMutationResult = NonNullable<
+  Awaited<ReturnType<typeof dmAllMembers>>
+>;
+export type DmAllMembersMutationBody = BodyType<DmAllBody>;
+export type DmAllMembersMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Send a DM to all members in a guild
+ */
+export const useDmAllMembers = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof dmAllMembers>>,
+    TError,
+    { data: BodyType<DmAllBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof dmAllMembers>>,
+  TError,
+  { data: BodyType<DmAllBody> },
+  TContext
+> => {
+  return useMutation(getDmAllMembersMutationOptions(options));
 };
 
 /**

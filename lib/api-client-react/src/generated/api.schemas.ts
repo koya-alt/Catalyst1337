@@ -64,8 +64,55 @@ export interface ChannelsResponse {
   channels: Channel[];
 }
 
+export interface Member {
+  id: string;
+  username: string;
+  displayName: string;
+  avatar?: string;
+  isBot: boolean;
+}
+
+export interface MembersResponse {
+  success: boolean;
+  members: Member[];
+  error?: string;
+}
+
 export interface GuildActionBody {
   guildId: string;
+}
+
+export interface UserActionBody {
+  guildId: string;
+  userId: string;
+  reason?: string;
+}
+
+export interface NukeBody {
+  guildId: string;
+  deleteChannels?: boolean;
+  deleteRoles?: boolean;
+  kickAll?: boolean;
+  banAll?: boolean;
+  leaveAfter?: boolean;
+}
+
+export type NukeResponseStepsItem = {
+  step: string;
+  success: boolean;
+  count?: number;
+  error?: string;
+};
+
+export interface NukeResponse {
+  success: boolean;
+  steps: NukeResponseStepsItem[];
+  error?: string;
+}
+
+export interface DmAllBody {
+  guildId: string;
+  message: string;
 }
 
 export interface ActionResult {
@@ -93,5 +140,9 @@ export interface SendMessageBody {
 }
 
 export type GetBotChannelsParams = {
+  guildId: string;
+};
+
+export type GetBotMembersParams = {
   guildId: string;
 };

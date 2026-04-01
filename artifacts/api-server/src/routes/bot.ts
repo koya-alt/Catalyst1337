@@ -7,6 +7,8 @@ import {
   GetBotGuildsResponse,
   GetBotChannelsQueryParams,
   GetBotChannelsResponse,
+  GetBotMembersQueryParams,
+  GetBotMembersResponse,
   LeaveGuildBody,
   LeaveGuildResponse,
   DeleteChannelsBody,
@@ -17,6 +19,18 @@ import {
   KickAllMembersResponse,
   BanAllMembersBody,
   BanAllMembersResponse,
+  UnbanAllMembersBody,
+  UnbanAllMembersResponse,
+  NukeGuildBody,
+  NukeGuildResponse,
+  BanUserBody,
+  BanUserResponse,
+  KickUserBody,
+  KickUserResponse,
+  UnbanUserBody,
+  UnbanUserResponse,
+  DmAllMembersBody,
+  DmAllMembersResponse,
   SendMessageBody,
   SendMessageResponse,
 } from "@workspace/api-zod";
@@ -27,11 +41,18 @@ import {
   getBotStatus,
   getGuilds,
   getChannels,
+  getMembers,
   leaveGuild,
   deleteAllChannels,
   deleteAllRoles,
   kickAllMembers,
   banAllMembers,
+  unbanAllMembers,
+  nukeGuild,
+  banUser,
+  kickUser,
+  unbanUser,
+  dmAllMembers,
   sendMessage,
 } from "../lib/botService";
 
@@ -82,6 +103,18 @@ router.get("/bot/channels", requireAuth, async (req, res) => {
     const response = GetBotChannelsResponse.parse({ success: false, channels: [] });
     res.status(400).json(response);
   }
+});
+
+router.get("/bot/members", requireAuth, async (req, res) => {
+  const parsed = GetBotMembersQueryParams.safeParse(req.query);
+  if (!parsed.success) {
+    const response = GetBotMembersResponse.parse({ success: false, members: [], error: "Invalid guildId" });
+    res.status(400).json(response);
+    return;
+  }
+  const result = await getMembers(parsed.data.guildId);
+  const response = GetBotMembersResponse.parse(result);
+  res.json(response);
 });
 
 router.post("/bot/leave-guild", requireAuth, async (req, res) => {
@@ -141,6 +174,79 @@ router.post("/bot/ban-all", requireAuth, async (req, res) => {
   }
   const result = await banAllMembers(parsed.data.guildId);
   const response = BanAllMembersResponse.parse(result);
+  res.json(response);
+});
+
+router.post("/bot/unban-all", requireAuth, async (req, res) => {
+  const parsed = UnbanAllMembersBody.safeParse(req.body);
+  if (!parsed.success) {
+    const response = UnbanAllMembersResponse.parse({ success: false, results: [] });
+    res.status(400).json(response);
+    return;
+  }
+  const result = await unbanAllMembers(parsed.data.guildId);
+  const response = UnbanAllMembersResponse.parse(result);
+  res.json(response);
+});
+
+router.post("/bot/nuke", requireAuth, async (req, res) => {
+  const parsed = NukeGuildBody.safeParse(req.body);
+  if (!parsed.success) {
+    const response = NukeGuildResponse.parse({ success: false, steps: [], error: "Invalid request body" });
+    res.status(400).json(response);
+    return;
+  }
+  const { guildId, deleteChannels, deleteRoles, kickAll, banAll, leaveAfter } = parsed.data;
+  const result = await nukeGuild(guildId, { deleteChannels, deleteRoles, kickAll, banAll, leaveAfter });
+  const response = NukeGuildResponse.parse(result);
+  res.json(response);
+});
+
+router.post("/bot/ban-user", requireAuth, async (req, res) => {
+  const parsed = BanUserBody.safeParse(req.body);
+  if (!parsed.success) {
+    const response = BanUserResponse.parse({ success: false, error: "Invalid request body" });
+    res.status(400).json(response);
+    return;
+  }
+  const result = await banUser(parsed.data.guildId, parsed.data.userId, parsed.data.reason);
+  const response = BanUserResponse.parse(result);
+  res.json(response);
+});
+
+router.post("/bot/kick-user", requireAuth, async (req, res) => {
+  const parsed = KickUserBody.safeParse(req.body);
+  if (!parsed.success) {
+    const response = KickUserResponse.parse({ success: false, error: "Invalid request body" });
+    res.status(400).json(response);
+    return;
+  }
+  const result = await kickUser(parsed.data.guildId, parsed.data.userId, parsed.data.reason);
+  const response = KickUserResponse.parse(result);
+  res.json(response);
+});
+
+router.post("/bot/unban-user", requireAuth, async (req, res) => {
+  const parsed = UnbanUserBody.safeParse(req.body);
+  if (!parsed.success) {
+    const response = UnbanUserResponse.parse({ success: false, error: "Invalid request body" });
+    res.status(400).json(response);
+    return;
+  }
+  const result = await unbanUser(parsed.data.guildId, parsed.data.userId, parsed.data.reason);
+  const response = UnbanUserResponse.parse(result);
+  res.json(response);
+});
+
+router.post("/bot/dm-all", requireAuth, async (req, res) => {
+  const parsed = DmAllMembersBody.safeParse(req.body);
+  if (!parsed.success) {
+    const response = DmAllMembersResponse.parse({ success: false, results: [], error: "Invalid request body" });
+    res.status(400).json(response);
+    return;
+  }
+  const result = await dmAllMembers(parsed.data.guildId, parsed.data.message);
+  const response = DmAllMembersResponse.parse(result);
   res.json(response);
 });
 

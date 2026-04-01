@@ -20,6 +20,7 @@ export async function connectBot(token: string): Promise<{ success: boolean; use
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildBans,
         GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.DirectMessages,
       ],
     });
 
@@ -98,6 +99,28 @@ export async function getChannels(guildId: string) {
   return guild.channels.cache
     .filter((c) => c.type === ChannelType.GuildText)
     .map((c) => ({ id: c.id, name: c.name, type: c.type }));
+}
+
+export async function getMembers(guildId: string) {
+  if (!client || !client.isReady()) {
+    return { success: false, members: [], error: "Bot not connected" };
+  }
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    await guild.members.fetch();
+    const members = guild.members.cache
+      .filter((m) => m.id !== client!.user?.id)
+      .map((m) => ({
+        id: m.id,
+        username: m.user.username,
+        displayName: m.displayName,
+        avatar: m.user.displayAvatarURL() ?? undefined,
+        isBot: m.user.bot,
+      }));
+    return { success: true, members };
+  } catch (err: unknown) {
+    return { success: false, members: [], error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 export async function leaveGuild(guildId: string): Promise<{ success: boolean; message?: string; error?: string }> {
@@ -203,6 +226,179 @@ export async function banAllMembers(guildId: string) {
       try {
         const name = member.user.tag;
         await member.ban({ reason: "Banned by Catalyst dashboard" });
+        results.push({ success: true, name });
+      } catch (err: unknown) {
+        results.push({ success: false, name: member.user.tag, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+    return { success: true, results };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err), results: [] };
+  }
+}
+
+export async function unbanAllMembers(guildId: string) {
+  if (!client || !client.isReady()) {
+    return { success: false, error: "Bot not connected" };
+  }
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const bans = await guild.bans.fetch();
+    const results: { success: boolean; name: string; error?: string }[] = [];
+    for (const [, ban] of bans) {
+      try {
+        const name = ban.user.tag;
+        await guild.bans.remove(ban.user.id, "Unbanned by Catalyst dashboard");
+        results.push({ success: true, name });
+      } catch (err: unknown) {
+        results.push({ success: false, name: ban.user.tag, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+    return { success: true, results };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err), results: [] };
+  }
+}
+
+export async function nukeGuild(
+  guildId: string,
+  options: { deleteChannels?: boolean; deleteRoles?: boolean; kickAll?: boolean; banAll?: boolean; leaveAfter?: boolean }
+) {
+  if (!client || !client.isReady()) {
+    return { success: false, steps: [], error: "Bot not connected" };
+  }
+
+  const steps: { step: string; success: boolean; count?: number; error?: string }[] = [];
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+
+    if (options.deleteChannels) {
+      try {
+        await guild.channels.fetch();
+        let count = 0;
+        for (const [, channel] of guild.channels.cache) {
+          try { await channel.delete(); count++; } catch {}
+        }
+        steps.push({ step: "Delete Channels", success: true, count });
+      } catch (err: unknown) {
+        steps.push({ step: "Delete Channels", success: false, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    if (options.deleteRoles) {
+      try {
+        await guild.roles.fetch();
+        let count = 0;
+        for (const [, role] of guild.roles.cache) {
+          if (role.managed || role.name === "@everyone") continue;
+          try { await role.delete(); count++; } catch {}
+        }
+        steps.push({ step: "Delete Roles", success: true, count });
+      } catch (err: unknown) {
+        steps.push({ step: "Delete Roles", success: false, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    if (options.kickAll) {
+      try {
+        await guild.members.fetch();
+        let count = 0;
+        for (const [, member] of guild.members.cache) {
+          if (member.id === client.user?.id || !member.kickable) continue;
+          try { await member.kick("Nuked by Catalyst"); count++; } catch {}
+        }
+        steps.push({ step: "Kick All", success: true, count });
+      } catch (err: unknown) {
+        steps.push({ step: "Kick All", success: false, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    if (options.banAll) {
+      try {
+        await guild.members.fetch();
+        let count = 0;
+        for (const [, member] of guild.members.cache) {
+          if (member.id === client.user?.id || !member.bannable) continue;
+          try { await member.ban({ reason: "Nuked by Catalyst" }); count++; } catch {}
+        }
+        steps.push({ step: "Ban All", success: true, count });
+      } catch (err: unknown) {
+        steps.push({ step: "Ban All", success: false, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    if (options.leaveAfter) {
+      try {
+        await guild.leave();
+        steps.push({ step: "Leave Server", success: true });
+      } catch (err: unknown) {
+        steps.push({ step: "Leave Server", success: false, error: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    return { success: true, steps };
+  } catch (err: unknown) {
+    return { success: false, steps, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function banUser(guildId: string, userId: string, reason?: string) {
+  if (!client || !client.isReady()) {
+    return { success: false, error: "Bot not connected" };
+  }
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    await guild.bans.create(userId, { reason: reason || "Banned by Catalyst dashboard" });
+    return { success: true, message: `User ${userId} banned` };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function kickUser(guildId: string, userId: string, reason?: string) {
+  if (!client || !client.isReady()) {
+    return { success: false, error: "Bot not connected" };
+  }
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const member = await guild.members.fetch(userId);
+    if (!member.kickable) {
+      return { success: false, error: "Member cannot be kicked (insufficient permissions)" };
+    }
+    await member.kick(reason || "Kicked by Catalyst dashboard");
+    return { success: true, message: `User ${member.user.tag} kicked` };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function unbanUser(guildId: string, userId: string, reason?: string) {
+  if (!client || !client.isReady()) {
+    return { success: false, error: "Bot not connected" };
+  }
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    await guild.bans.remove(userId, reason || "Unbanned by Catalyst dashboard");
+    return { success: true, message: `User ${userId} unbanned` };
+  } catch (err: unknown) {
+    return { success: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function dmAllMembers(guildId: string, message: string) {
+  if (!client || !client.isReady()) {
+    return { success: false, error: "Bot not connected" };
+  }
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    await guild.members.fetch();
+    const results: { success: boolean; name: string; error?: string }[] = [];
+    for (const [, member] of guild.members.cache) {
+      if (member.id === client.user?.id || member.user.bot) continue;
+      try {
+        const name = member.user.tag;
+        await member.send(message);
         results.push({ success: true, name });
       } catch (err: unknown) {
         results.push({ success: false, name: member.user.tag, error: err instanceof Error ? err.message : String(err) });

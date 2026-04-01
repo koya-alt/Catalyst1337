@@ -150,6 +150,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/ChannelsResponse"
 
+  /bot/members:
+    get:
+      operationId: getBotMembers
+      tags: [bot]
+      summary: Get members for a guild
+      parameters:
+        - name: guildId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MembersResponse"
+
   /bot/leave-guild:
     post:
       operationId: leaveGuild
@@ -240,6 +259,120 @@ paths:
       responses:
         "200":
           description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkActionResponse"
+
+  /bot/unban-all:
+    post:
+      operationId: unbanAllMembers
+      tags: [bot]
+      summary: Unban all banned members from a guild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkActionResponse"
+
+  /bot/nuke:
+    post:
+      operationId: nukeGuild
+      tags: [bot]
+      summary: Nuke a guild (delete channels, roles, ban/kick all, leave)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NukeBody"
+      responses:
+        "200":
+          description: Nuke result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NukeResponse"
+
+  /bot/ban-user:
+    post:
+      operationId: banUser
+      tags: [bot]
+      summary: Ban a single user by ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+
+  /bot/kick-user:
+    post:
+      operationId: kickUser
+      tags: [bot]
+      summary: Kick a single user by ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+
+  /bot/unban-user:
+    post:
+      operationId: unbanUser
+      tags: [bot]
+      summary: Unban a single user by ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+
+  /bot/dm-all:
+    post:
+      operationId: dmAllMembers
+      tags: [bot]
+      summary: Send a DM to all members in a guild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DmAllBody"
+      responses:
+        "200":
+          description: DM result
           content:
             application/json:
               schema:
@@ -393,6 +526,40 @@ components:
         - success
         - channels
 
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        displayName:
+          type: string
+        avatar:
+          type: string
+        isBot:
+          type: boolean
+      required:
+        - id
+        - username
+        - displayName
+        - isBot
+
+    MembersResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/Member"
+        error:
+          type: string
+      required:
+        - success
+        - members
+
     GuildActionBody:
       type: object
       properties:
@@ -400,6 +567,75 @@ components:
           type: string
       required:
         - guildId
+
+    UserActionBody:
+      type: object
+      properties:
+        guildId:
+          type: string
+        userId:
+          type: string
+        reason:
+          type: string
+      required:
+        - guildId
+        - userId
+
+    NukeBody:
+      type: object
+      properties:
+        guildId:
+          type: string
+        deleteChannels:
+          type: boolean
+        deleteRoles:
+          type: boolean
+        kickAll:
+          type: boolean
+        banAll:
+          type: boolean
+        leaveAfter:
+          type: boolean
+      required:
+        - guildId
+
+    NukeResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        steps:
+          type: array
+          items:
+            type: object
+            properties:
+              step:
+                type: string
+              success:
+                type: boolean
+              count:
+                type: integer
+              error:
+                type: string
+            required:
+              - step
+              - success
+        error:
+          type: string
+      required:
+        - success
+        - steps
+
+    DmAllBody:
+      type: object
+      properties:
+        guildId:
+          type: string
+        message:
+          type: string
+      required:
+        - guildId
+        - message
 
     ActionResult:
       type: object

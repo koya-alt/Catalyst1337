@@ -103,6 +103,27 @@ export const GetBotChannelsResponse = zod.object({
 });
 
 /**
+ * @summary Get members for a guild
+ */
+export const GetBotMembersQueryParams = zod.object({
+  guildId: zod.coerce.string(),
+});
+
+export const GetBotMembersResponse = zod.object({
+  success: zod.boolean(),
+  members: zod.array(
+    zod.object({
+      id: zod.string(),
+      username: zod.string(),
+      displayName: zod.string(),
+      avatar: zod.string().optional(),
+      isBot: zod.boolean(),
+    }),
+  ),
+  error: zod.string().optional(),
+});
+
+/**
  * @summary Bot leaves a guild
  */
 export const LeaveGuildBody = zod.object({
@@ -186,6 +207,119 @@ export const BanAllMembersBody = zod.object({
 });
 
 export const BanAllMembersResponse = zod.object({
+  success: zod.boolean(),
+  results: zod
+    .array(
+      zod.object({
+        success: zod.boolean(),
+        name: zod.string(),
+        error: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  error: zod.string().optional(),
+});
+
+/**
+ * @summary Unban all banned members from a guild
+ */
+export const UnbanAllMembersBody = zod.object({
+  guildId: zod.string(),
+});
+
+export const UnbanAllMembersResponse = zod.object({
+  success: zod.boolean(),
+  results: zod
+    .array(
+      zod.object({
+        success: zod.boolean(),
+        name: zod.string(),
+        error: zod.string().optional(),
+      }),
+    )
+    .optional(),
+  error: zod.string().optional(),
+});
+
+/**
+ * @summary Nuke a guild (delete channels, roles, ban/kick all, leave)
+ */
+export const NukeGuildBody = zod.object({
+  guildId: zod.string(),
+  deleteChannels: zod.boolean().optional(),
+  deleteRoles: zod.boolean().optional(),
+  kickAll: zod.boolean().optional(),
+  banAll: zod.boolean().optional(),
+  leaveAfter: zod.boolean().optional(),
+});
+
+export const NukeGuildResponse = zod.object({
+  success: zod.boolean(),
+  steps: zod.array(
+    zod.object({
+      step: zod.string(),
+      success: zod.boolean(),
+      count: zod.number().optional(),
+      error: zod.string().optional(),
+    }),
+  ),
+  error: zod.string().optional(),
+});
+
+/**
+ * @summary Ban a single user by ID
+ */
+export const BanUserBody = zod.object({
+  guildId: zod.string(),
+  userId: zod.string(),
+  reason: zod.string().optional(),
+});
+
+export const BanUserResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+  error: zod.string().optional(),
+});
+
+/**
+ * @summary Kick a single user by ID
+ */
+export const KickUserBody = zod.object({
+  guildId: zod.string(),
+  userId: zod.string(),
+  reason: zod.string().optional(),
+});
+
+export const KickUserResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+  error: zod.string().optional(),
+});
+
+/**
+ * @summary Unban a single user by ID
+ */
+export const UnbanUserBody = zod.object({
+  guildId: zod.string(),
+  userId: zod.string(),
+  reason: zod.string().optional(),
+});
+
+export const UnbanUserResponse = zod.object({
+  success: zod.boolean(),
+  message: zod.string().optional(),
+  error: zod.string().optional(),
+});
+
+/**
+ * @summary Send a DM to all members in a guild
+ */
+export const DmAllMembersBody = zod.object({
+  guildId: zod.string(),
+  message: zod.string(),
+});
+
+export const DmAllMembersResponse = zod.object({
   success: zod.boolean(),
   results: zod
     .array(
