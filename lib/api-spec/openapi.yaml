@@ -73,6 +73,74 @@ paths:
               schema:
                 $ref: "#/components/schemas/AuthCheckResponse"
 
+  /bot/profiles:
+    get:
+      operationId: getBotProfiles
+      tags: [bot]
+      summary: List saved bot profiles
+      responses:
+        "200":
+          description: List of saved profiles
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotProfilesResponse"
+    post:
+      operationId: saveBotProfile
+      tags: [bot]
+      summary: Save a bot profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveBotProfileBody"
+      responses:
+        "200":
+          description: Saved profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveBotProfileResponse"
+
+  /bot/profiles/{id}:
+    delete:
+      operationId: deleteBotProfile
+      tags: [bot]
+      summary: Delete a saved bot profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deletion result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /bot/profiles/{id}/connect:
+    post:
+      operationId: connectBotProfile
+      tags: [bot]
+      summary: Connect using a saved bot profile
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Connection result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectBotResponse"
+
   /bot/connect:
     post:
       operationId: connectBot
@@ -671,6 +739,60 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ActionResult"
+        error:
+          type: string
+      required:
+        - success
+
+    BotProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        username:
+          type: string
+        active:
+          type: boolean
+      required:
+        - id
+        - name
+        - active
+
+    BotProfilesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/BotProfile"
+      required:
+        - success
+        - profiles
+
+    SaveBotProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        token:
+          type: string
+        id:
+          type: string
+      required:
+        - name
+        - token
+
+    SaveBotProfileResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        id:
+          type: string
         error:
           type: string
       required:

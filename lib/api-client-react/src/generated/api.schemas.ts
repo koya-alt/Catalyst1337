@@ -133,6 +133,30 @@ export interface BulkActionResponse {
   error?: string;
 }
 
+export interface BotProfile {
+  id: string;
+  name: string;
+  username?: string;
+  active: boolean;
+}
+
+export interface BotProfilesResponse {
+  success: boolean;
+  profiles: BotProfile[];
+}
+
+export interface SaveBotProfileBody {
+  name: string;
+  token: string;
+  id?: string;
+}
+
+export interface SaveBotProfileResponse {
+  success: boolean;
+  id?: string;
+  error?: string;
+}
+
 export interface SendMessageBody {
   guildId: string;
   channelId: string;

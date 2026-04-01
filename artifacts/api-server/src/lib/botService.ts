@@ -23,6 +23,11 @@ export function loadSavedToken(): string | null {
 let client: Client | null = null;
 let botUsername: string | null = null;
 let botToken: string | null = null;
+let activeProfileId: string | null = null;
+
+export function getActiveProfileId(): string | null {
+  return activeProfileId;
+}
 
 export async function connectBot(token: string): Promise<{ success: boolean; username?: string; error?: string }> {
   try {

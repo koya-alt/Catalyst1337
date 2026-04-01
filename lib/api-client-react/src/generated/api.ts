@@ -19,6 +19,7 @@ import type {
 import type {
   ActionResponse,
   AuthCheckResponse,
+  BotProfilesResponse,
   BotStatusResponse,
   BulkActionResponse,
   ChannelsResponse,
@@ -36,6 +37,8 @@ import type {
   NukeBody,
   NukeResponse,
   OkResponse,
+  SaveBotProfileBody,
+  SaveBotProfileResponse,
   SendMessageBody,
   UserActionBody,
 } from "./api.schemas";
@@ -356,6 +359,335 @@ export function useAuthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List saved bot profiles
+ */
+export const getGetBotProfilesUrl = () => {
+  return `/api/bot/profiles`;
+};
+
+export const getBotProfiles = async (
+  options?: RequestInit,
+): Promise<BotProfilesResponse> => {
+  return customFetch<BotProfilesResponse>(getGetBotProfilesUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetBotProfilesQueryKey = () => {
+  return [`/api/bot/profiles`] as const;
+};
+
+export const getGetBotProfilesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getBotProfiles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getBotProfiles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetBotProfilesQueryKey();
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getBotProfiles>>> = ({
+    signal,
+  }) => getBotProfiles({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getBotProfiles>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetBotProfilesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getBotProfiles>>
+>;
+export type GetBotProfilesQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List saved bot profiles
+ */
+
+export function useGetBotProfiles<
+  TData = Awaited<ReturnType<typeof getBotProfiles>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof getBotProfiles>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetBotProfilesQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Save a bot profile
+ */
+export const getSaveBotProfileUrl = () => {
+  return `/api/bot/profiles`;
+};
+
+export const saveBotProfile = async (
+  saveBotProfileBody: SaveBotProfileBody,
+  options?: RequestInit,
+): Promise<SaveBotProfileResponse> => {
+  return customFetch<SaveBotProfileResponse>(getSaveBotProfileUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(saveBotProfileBody),
+  });
+};
+
+export const getSaveBotProfileMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveBotProfile>>,
+    TError,
+    { data: BodyType<SaveBotProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof saveBotProfile>>,
+  TError,
+  { data: BodyType<SaveBotProfileBody> },
+  TContext
+> => {
+  const mutationKey = ["saveBotProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof saveBotProfile>>,
+    { data: BodyType<SaveBotProfileBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return saveBotProfile(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SaveBotProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof saveBotProfile>>
+>;
+export type SaveBotProfileMutationBody = BodyType<SaveBotProfileBody>;
+export type SaveBotProfileMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Save a bot profile
+ */
+export const useSaveBotProfile = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof saveBotProfile>>,
+    TError,
+    { data: BodyType<SaveBotProfileBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof saveBotProfile>>,
+  TError,
+  { data: BodyType<SaveBotProfileBody> },
+  TContext
+> => {
+  return useMutation(getSaveBotProfileMutationOptions(options));
+};
+
+/**
+ * @summary Delete a saved bot profile
+ */
+export const getDeleteBotProfileUrl = (id: string) => {
+  return `/api/bot/profiles/${id}`;
+};
+
+export const deleteBotProfile = async (
+  id: string,
+  options?: RequestInit,
+): Promise<OkResponse> => {
+  return customFetch<OkResponse>(getDeleteBotProfileUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteBotProfileMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteBotProfile>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteBotProfile>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["deleteBotProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteBotProfile>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteBotProfile(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteBotProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteBotProfile>>
+>;
+
+export type DeleteBotProfileMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a saved bot profile
+ */
+export const useDeleteBotProfile = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteBotProfile>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteBotProfile>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getDeleteBotProfileMutationOptions(options));
+};
+
+/**
+ * @summary Connect using a saved bot profile
+ */
+export const getConnectBotProfileUrl = (id: string) => {
+  return `/api/bot/profiles/${id}/connect`;
+};
+
+export const connectBotProfile = async (
+  id: string,
+  options?: RequestInit,
+): Promise<ConnectBotResponse> => {
+  return customFetch<ConnectBotResponse>(getConnectBotProfileUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getConnectBotProfileMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof connectBotProfile>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof connectBotProfile>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  const mutationKey = ["connectBotProfile"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof connectBotProfile>>,
+    { id: string }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return connectBotProfile(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ConnectBotProfileMutationResult = NonNullable<
+  Awaited<ReturnType<typeof connectBotProfile>>
+>;
+
+export type ConnectBotProfileMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Connect using a saved bot profile
+ */
+export const useConnectBotProfile = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof connectBotProfile>>,
+    TError,
+    { id: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof connectBotProfile>>,
+  TError,
+  { id: string },
+  TContext
+> => {
+  return useMutation(getConnectBotProfileMutationOptions(options));
+};
 
 /**
  * @summary Connect bot with token

@@ -9,6 +9,8 @@
 export * from "./actionResponse";
 export * from "./actionResult";
 export * from "./authCheckResponse";
+export * from "./botProfile";
+export * from "./botProfilesResponse";
 export * from "./botStatusResponse";
 export * from "./bulkActionResponse";
 export * from "./channel";
@@ -30,5 +32,7 @@ export * from "./nukeBody";
 export * from "./nukeResponse";
 export * from "./nukeResponseStepsItem";
 export * from "./okResponse";
+export * from "./saveBotProfileBody";
+export * from "./saveBotProfileResponse";
 export * from "./sendMessageBody";
 export * from "./userActionBody";

@@ -42,6 +42,60 @@ export const AuthCheckResponse = zod.object({
 });
 
 /**
+ * @summary List saved bot profiles
+ */
+export const GetBotProfilesResponse = zod.object({
+  success: zod.boolean(),
+  profiles: zod.array(
+    zod.object({
+      id: zod.string(),
+      name: zod.string(),
+      username: zod.string().optional(),
+      active: zod.boolean(),
+    }),
+  ),
+});
+
+/**
+ * @summary Save a bot profile
+ */
+export const SaveBotProfileBody = zod.object({
+  name: zod.string(),
+  token: zod.string(),
+  id: zod.string().optional(),
+});
+
+export const SaveBotProfileResponse = zod.object({
+  success: zod.boolean(),
+  id: zod.string().optional(),
+  error: zod.string().optional(),
+});
+
+/**
+ * @summary Delete a saved bot profile
+ */
+export const DeleteBotProfileParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const DeleteBotProfileResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
+ * @summary Connect using a saved bot profile
+ */
+export const ConnectBotProfileParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const ConnectBotProfileResponse = zod.object({
+  success: zod.boolean(),
+  username: zod.string().optional(),
+  error: zod.string().optional(),
+});
+
+/**
  * @summary Connect bot with token
  */
 export const ConnectBotBody = zod.object({
