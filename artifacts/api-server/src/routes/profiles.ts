@@ -34,8 +34,11 @@ router.get("/bot/profiles", (_req, res) => {
     });
 
     res.json(response);
-  } catch {
-    res.status(500).json({ success: false, error: "Failed to fetch profiles" });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch profiles",
+    });
   }
 });
 
@@ -57,8 +60,11 @@ router.get("/bot/add-test", (_req, res) => {
       success: true,
       profile,
     });
-  } catch {
-    res.status(500).json({ success: false, error: "Failed to add bot" });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to add bot",
+    });
   }
 });
 
@@ -86,8 +92,11 @@ router.post("/bot/profiles", requireAuth, (req, res) => {
     });
 
     res.json(response);
-  } catch {
-    res.status(500).json({ success: false, error: "Failed to save profile" });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to save profile",
+    });
   }
 });
 
@@ -96,12 +105,15 @@ router.delete("/bot/profiles/:id", requireAuth, (req, res) => {
   try {
     const ok = deleteProfile(req.params.id);
     res.json({ success: ok });
-  } catch {
-    res.status(500).json({ success: false, error: "Failed to delete profile" });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to delete profile",
+    });
   }
 });
 
-// ✅ CONNECT BOT
+// ✅ CONNECT BOT (FIXED)
 router.post("/bot/profiles/:id/connect", requireAuth, async (req, res) => {
   try {
     const profile = getProfileById(req.params.id);
@@ -121,10 +133,13 @@ router.post("/bot/profiles/:id/connect", requireAuth, async (req, res) => {
 
     const response = ConnectBotResponse.parse(result);
     res.json(response);
-  } catch {
-    } catch (err) {
-  res.status(500).json({
-    success: false,
-    error: "Failed to connect bot"
-  });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: "Failed to connect bot",
+    });
   }
+});
+
+export default router;
