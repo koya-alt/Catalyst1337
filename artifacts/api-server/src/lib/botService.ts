@@ -1,5 +1,24 @@
 import { Client, GatewayIntentBits, TextChannel, ChannelType } from "discord.js";
+import { readFileSync, writeFileSync, unlinkSync, existsSync } from "fs";
+import { join } from "path";
 import { logger } from "./logger";
+
+const TOKEN_FILE = join(process.cwd(), ".saved-token");
+
+function saveTokenToDisk(token: string) {
+  try { writeFileSync(TOKEN_FILE, token, "utf8"); } catch {}
+}
+
+function clearTokenFromDisk() {
+  try { if (existsSync(TOKEN_FILE)) unlinkSync(TOKEN_FILE); } catch {}
+}
+
+export function loadSavedToken(): string | null {
+  try {
+    if (existsSync(TOKEN_FILE)) return readFileSync(TOKEN_FILE, "utf8").trim();
+  } catch {}
+  return null;
+}
 
 let client: Client | null = null;
 let botUsername: string | null = null;
@@ -48,6 +67,7 @@ export async function connectBot(token: string): Promise<{ success: boolean; use
     client = newClient;
     botToken = token;
     botUsername = client.user?.tag ?? "Unknown Bot";
+    saveTokenToDisk(token);
     logger.info({ username: botUsername }, "Bot connected");
 
     return { success: true, username: botUsername };
@@ -64,6 +84,7 @@ export async function disconnectBot(): Promise<void> {
     client = null;
     botUsername = null;
     botToken = null;
+    clearTokenFromDisk();
     logger.info("Bot disconnected");
   }
 }

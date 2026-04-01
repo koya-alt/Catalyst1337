@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Zap, LogOut, RefreshCw, Server, Send, ShieldAlert, Trash2, AlertTriangle,
@@ -117,6 +117,15 @@ export default function DashboardPage() {
   // Single user action state
   const [singleUserId, setSingleUserId] = useState("");
   const [singleReason, setSingleReason] = useState("");
+  const singleUserCardRef = useRef<HTMLDivElement>(null);
+
+  const fillUserId = (id: string) => {
+    setSingleUserId(id);
+    setActiveTab("members");
+    setTimeout(() => {
+      singleUserCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+  };
 
   // Message state
   const [selectedChannel, setSelectedChannel] = useState("");
@@ -447,10 +456,13 @@ export default function DashboardPage() {
                 {activeTab === "members" && (
                   <div className="space-y-4">
                     {/* Single User Action */}
-                    <Card className="bg-card/40 border-border/50">
+                    <Card ref={singleUserCardRef} className="bg-card/40 border-border/50">
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-sm flex items-center gap-2"><Shield className="w-4 h-4" /> Single User Action</CardTitle>
-                        <CardDescription>Act on a specific user by their Discord ID</CardDescription>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Shield className="w-4 h-4" /> Single User Action
+                          {singleUserId && <span className="ml-auto font-mono text-xs text-primary/80 bg-primary/10 px-2 py-0.5 rounded">ID: {singleUserId}</span>}
+                        </CardTitle>
+                        <CardDescription>Act on a specific user by their Discord ID — or click a member below to auto-fill</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="flex flex-col sm:flex-row gap-2">
@@ -515,17 +527,24 @@ export default function DashboardPage() {
                           ) : members.length === 0 ? (
                             <div className="p-6 text-center text-muted-foreground text-sm">{memberSearch ? "No members match your search" : "No members found"}</div>
                           ) : members.map(m => (
-                            <div key={m.id} className="flex items-center gap-3 px-4 py-2 border-b border-border/30 hover:bg-white/5 group">
-                              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-                                {m.avatar ? <img src={m.avatar} alt={m.displayName} className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-muted-foreground">{m.displayName.charAt(0)}</span>}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate">{m.displayName}</div>
-                                <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                  @{m.username}
-                                  {m.isBot && <span className="text-xs bg-primary/20 text-primary px-1 rounded">BOT</span>}
+                            <div key={m.id} className={`flex items-center gap-3 px-4 py-2 border-b border-border/30 hover:bg-white/5 group transition-colors ${singleUserId === m.id ? "bg-primary/10 border-l-2 border-l-primary" : ""}`}>
+                              <button
+                                className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                                onClick={() => fillUserId(m.id)}
+                                title="Click to fill user ID"
+                              >
+                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                                  {m.avatar ? <img src={m.avatar} alt={m.displayName} className="w-full h-full object-cover" /> : <span className="text-xs font-bold text-muted-foreground">{m.displayName.charAt(0)}</span>}
                                 </div>
-                              </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className={`text-sm font-medium truncate ${singleUserId === m.id ? "text-primary" : ""}`}>{m.displayName}</div>
+                                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    @{m.username}
+                                    {m.isBot && <span className="text-xs bg-primary/20 text-primary px-1 rounded">BOT</span>}
+                                    {singleUserId === m.id && <span className="text-xs bg-primary/20 text-primary px-1 rounded">selected</span>}
+                                  </div>
+                                </div>
+                              </button>
                               <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                                 <Button size="sm" variant="ghost" onClick={() => handleMemberKick(m.id, m.username)} className="h-7 px-2 text-xs text-orange-400 hover:bg-orange-500/10">
                                   <UserMinus className="w-3.5 h-3.5" />
