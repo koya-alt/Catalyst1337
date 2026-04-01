@@ -17,7 +17,7 @@ import { connectBot, getActiveProfileId } from "../lib/botService";
 
 const router: IRouter = Router();
 
-router.get("/bot/profiles", requireAuth, (_req, res) => {
+router.get("/bot/profiles", (_req, res) => {
   try {
     const profiles = getAllProfiles();
     const activeId = getActiveProfileId();
