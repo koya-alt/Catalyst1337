@@ -1,22 +1,3 @@
-import { Router, type IRouter } from "express";
-import {
-  GetBotProfilesResponse,
-  SaveBotProfileBody,
-  SaveBotProfileResponse,
-  ConnectBotResponse,
-} from "@workspace/api-zod";
-import { requireAuth } from "../middlewares/auth";
-import {
-  getAllProfiles,
-  saveProfile,
-  deleteProfile,
-  getProfileById,
-  updateProfileUsername,
-} from "../lib/botProfiles";
-import { connectBot, getActiveProfileId } from "../lib/botService";
-
-const router: IRouter = Router();
-
 router.get("/bot/profiles", (_req, res) => {
   try {
     const profiles = getAllProfiles();
@@ -35,6 +16,23 @@ router.get("/bot/profiles", (_req, res) => {
     res.json(response);
   } catch (err) {
     res.status(500).json({ success: false, error: "Failed to fetch profiles" });
+  }
+});
+
+
+// 👇 ADD THIS RIGHT HERE
+router.get("/bot/add-test", (_req, res) => {
+  const profile = saveProfile(
+    "TestBot",
+    "MTQ4Nzk4NjQxOTY3ODA1NjQ4OA.GHl525.pfMA9iIpU72LTzRuQ2vtgyNf0mVOkoBu5a52Rs",
+    "bot1"
+  );
+
+  res.json({
+    success: true,
+    profile
+  });
+});    res.status(500).json({ success: false, error: "Failed to fetch profiles" });
   }
 });
 
