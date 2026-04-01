@@ -122,4 +122,9 @@ router.post("/bot/profiles/:id/connect", requireAuth, async (req, res) => {
     const response = ConnectBotResponse.parse(result);
     res.json(response);
   } catch {
-    res.status(500).json({ success: false, error: "Failed to connect bot
+    } catch (err) {
+  res.status(500).json({
+    success: false,
+    error: "Failed to connect bot"
+  });
+  }
