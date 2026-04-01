@@ -1,15 +1,18 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Catalyst Discord Bot API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: bot
+    description: Discord bot operations
 paths:
   /healthz:
     get:
@@ -24,6 +27,243 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /auth/check:
+    get:
+      operationId: authCheck
+      tags: [auth]
+      summary: Check authentication status
+      responses:
+        "200":
+          description: Auth status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthCheckResponse"
+
+  /bot/connect:
+    post:
+      operationId: connectBot
+      tags: [bot]
+      summary: Connect bot with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectBotBody"
+      responses:
+        "200":
+          description: Connection result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectBotResponse"
+
+  /bot/disconnect:
+    post:
+      operationId: disconnectBot
+      tags: [bot]
+      summary: Disconnect the bot
+      responses:
+        "200":
+          description: Disconnection result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+
+  /bot/status:
+    get:
+      operationId: getBotStatus
+      tags: [bot]
+      summary: Get bot connection status
+      responses:
+        "200":
+          description: Bot status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BotStatusResponse"
+
+  /bot/guilds:
+    get:
+      operationId: getBotGuilds
+      tags: [bot]
+      summary: Get guilds the bot is in
+      responses:
+        "200":
+          description: List of guilds
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GuildsResponse"
+
+  /bot/channels:
+    get:
+      operationId: getBotChannels
+      tags: [bot]
+      summary: Get channels for a guild
+      parameters:
+        - name: guildId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of channels
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChannelsResponse"
+
+  /bot/leave-guild:
+    post:
+      operationId: leaveGuild
+      tags: [bot]
+      summary: Bot leaves a guild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+
+  /bot/delete-channels:
+    post:
+      operationId: deleteChannels
+      tags: [bot]
+      summary: Delete all channels in a guild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkActionResponse"
+
+  /bot/delete-roles:
+    post:
+      operationId: deleteRoles
+      tags: [bot]
+      summary: Delete all roles in a guild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkActionResponse"
+
+  /bot/kick-all:
+    post:
+      operationId: kickAllMembers
+      tags: [bot]
+      summary: Kick all members from a guild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkActionResponse"
+
+  /bot/ban-all:
+    post:
+      operationId: banAllMembers
+      tags: [bot]
+      summary: Ban all members from a guild
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GuildActionBody"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkActionResponse"
+
+  /bot/send-message:
+    post:
+      operationId: sendMessage
+      tags: [bot]
+      summary: Send a message to a channel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageBody"
+      responses:
+        "200":
+          description: Send result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActionResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +274,182 @@ components:
       required:
         - status
 
+    OkResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    LoginBody:
+      type: object
+      properties:
+        password:
+          type: string
+      required:
+        - password
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        error:
+          type: string
+      required:
+        - success
+
+    AuthCheckResponse:
+      type: object
+      properties:
+        loggedIn:
+          type: boolean
+      required:
+        - loggedIn
+
+    ConnectBotBody:
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+        - token
+
+    ConnectBotResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        username:
+          type: string
+        error:
+          type: string
+      required:
+        - success
+
+    BotStatusResponse:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        username:
+          type: string
+      required:
+        - connected
+
+    Guild:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        memberCount:
+          type: integer
+      required:
+        - id
+        - name
+
+    GuildsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        guilds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Guild"
+      required:
+        - success
+        - guilds
+
+    Channel:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: integer
+      required:
+        - id
+        - name
+        - type
+
+    ChannelsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/Channel"
+      required:
+        - success
+        - channels
+
+    GuildActionBody:
+      type: object
+      properties:
+        guildId:
+          type: string
+      required:
+        - guildId
+
+    ActionResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        name:
+          type: string
+        error:
+          type: string
+      required:
+        - success
+        - name
+
+    ActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        error:
+          type: string
+      required:
+        - success
+
+    BulkActionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActionResult"
+        error:
+          type: string
+      required:
+        - success
+
+    SendMessageBody:
+      type: object
+      properties:
+        guildId:
+          type: string
+        channelId:
+          type: string
+        message:
+          type: string
+      required:
+        - guildId
+        - channelId
+        - message
